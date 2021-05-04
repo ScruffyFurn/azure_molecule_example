@@ -1,0 +1,24 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: azure
+platforms:
+  - name: {{ cookiecutter.role_name}}
+    resource_group_name: "{{ cookiecutter.resource_prefix + '-' + cookiecutter.role_name }}"
+    vm_size: Standard_B1s
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.4'
+      version: latest
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra
+scenario:
+  name: default
+lint: |
+  set -e
+  yamllint .
+  ansible-lint .

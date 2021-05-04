@@ -1,0 +1,34 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: azure
+platforms:
+  - name: {{cookiecutter.scenario_name}}
+    resource_group_name: "{{ cookiecutter.resource_prefix + '-' + cookiecutter.scenario_name }}"
+    vm_size: Standard_B1s
+    image:
+      offer: Windows-10
+      publisher: MicrosoftWindowsDesktop
+      sku: 'rs5-pro'
+      version: latest
+provisioner:
+  name: ansible
+  connection_options:
+    become: true
+    become_method: runas
+    become_user: SYSTEM
+    ansible_password: M0!3cul3@%1d
+    ansible_user: molecule
+    ansible_connection: winrm
+    ansible_winrm_transport: basic
+    ansible_winrm_scheme: https
+    ansible_winrm_server_cert_validation: ignore
+    ansible_shell_type: powershell
+verifier:
+  name: ansible
+playbooks:
+  prepare: prepare.yml
+lint: |
+  set -e
+  yamllint .

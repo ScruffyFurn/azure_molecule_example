@@ -1,0 +1,164 @@
+{% raw -%}
+---
+- hosts: localhost
+  tasks:
+    - name: Prepare random postfix
+      set_fact:
+        rpfx: "{{ 100000 | random }}"
+      run_once: true
+    - name: Set random storage name
+      set_fact:
+        storage_account: "store{{ rpfx }}"
+{%- endraw %}
+- name: provision new azure host
+  hosts: localhost
+  connection: local
+  vars:
+    resourcegroupname: "{{ cookiecutter.resource_prefix + '-' + cookiecutter.scenario_name }}"
+    vm_name: "{{ cookiecutter.scenario_name}}"
+    vm_user: molecule
+    vm_password: M0!3cul3@%1d
+    location: eastus
+    winrm_port: 5986
+  {% raw -%}
+    # Below is UTF-16 Base64 encoding for:
+    #   Invoke-Expression -Command ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1')); Enable-WSManCredSSP -Role Server -Force
+    winrm_enable_script: SQBuAHYAbwBrAGUALQBFAHgAcAByAGUAcwBzAGkAbwBuACAALQBDAG8AbQBtAGEAbgBkACAAKAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABTAHkAcwB0AGUAbQAuAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAKQAuAEQAbwB3AG4AbABvAGEAZABTAHQAcgBpAG4AZwAoACcAaAB0AHQAcABzADoALwAvAHIAYQB3AC4AZwBpAHQAaAB1AGIAdQBzAGUAcgBjAG8AbgB0AGUAbgB0AC4AYwBvAG0ALwBhAG4AcwBpAGIAbABlAC8AYQBuAHMAaQBiAGwAZQAvAGQAZQB2AGUAbAAvAGUAeABhAG0AcABsAGUAcwAvAHMAYwByAGkAcAB0AHMALwBDAG8AbgBmAGkAZwB1AHIAZQBSAGUAbQBvAHQAaQBuAGcARgBvAHIAQQBuAHMAaQBiAGwAZQAuAHAAcwAxACcAKQApADsAIABFAG4AYQBiAGwAZQAtAFcAUwBNAGEAbgBDAHIAZQBkAFMAUwBQACAALQBSAG8AbABlACAAUwBlAHIAdgBlAHIAIAAtAEYAbwByAGMAZQA=
+
+  tasks:
+  - name: Check for set resource group
+    fail:
+      msg: "Resource group is not net in < vars.resourcegroupname >."
+    when: (vars.resourcegroupname is undefined) or vars.resourcegroupname == ""
+
+  - name: create Azure resource group
+    azure_rm_resourcegroup:
+      name: "{{ vars.resourcegroupname }}"
+      location: '{{ vars.location }}'
+      state: present
+
+  - name: create Azure virtual network in resource group
+    azure_rm_virtualnetwork:
+      name: "{{ vars.vm_name }}"
+      resource_group: "{{ vars.resourcegroupname }}"
+      address_prefixes_cidr:
+        - 10.1.0.0/16
+      state: present
+
+  - name: create Azure subnet in virtualnetwork
+    azure_rm_subnet:
+      name: '{{ vars.vm_name }}'
+      state: present
+      virtual_network_name: "{{ vars.vm_name }}"
+      resource_group: "{{ vars.resourcegroupname }}"
+      address_prefix_cidr: 10.1.0.0/24
+
+  - name: Create public ip
+      azure_rm_publicipaddress:
+        resource_group: "{{ vars.resourcegroupname }}"
+        allocation_method: Dynamic
+        domain_name: "{{ vars.vm_name}}"
+        name: "{{ vars.vm_name }}ip01"
+
+  - name: Create security group that allows WINRM
+    azure_rm_securitygroup:
+      resource_group: "{{ vars.resourcegroupname }}"
+      name: "{{ vars.vm_name }}sg01"
+      rules:
+        - name: WINRM
+          destination_port_range: "{{ winrm_port }}"
+          access: Allow
+          priority: 101
+          direction: Inbound
+
+  - name: Create NIC
+    azure_rm_networkinterface:
+      resource_group: "{{ vars.resourcegroupname }}"
+      name: "{{ vars.vm_name }}uni01"
+      virtual_network: "{{ vars.vm_name }}"
+      subnet: "{{ vars.vm_name }}"
+      public_ip_name: "{{ vars.vm_name }}ip01"
+      security_group: "{{ vars.vm_name }}sg01"
+
+  - name: create Azure storage account
+    azure_rm_storageaccount:
+      name: "{{ storage_account }}"
+      resource_group: "{{ vars.resourcegroupname }}"
+      account_type: Standard_LRS
+
+  - name: provision new Azure virtual host
+      azure_rm_virtualmachine:
+        admin_username: '{{ vars.vm_user }}'
+        admin_password: "{{ vars.vm_password }}"
+        os_type: Windows
+        image: "{{ item.image }}"
+        name: "{{ item.name }}"
+        resource_group: "{{ item.resource_group_name }}"
+        state: present
+        vm_size: "{{ item.vm_size }}"
+        storage_account_name: "{{ storage_account }}"
+        network_interfaces: "{{ vars.vm_name }}uni01"
+      register: server
+      with_items: "{{ molecule_yml.platforms }}"
+      async: 7200
+      poll: 0
+
+  - name: Wait for instance(s) creation to complete
+    async_status:
+      jid: "{{ item.ansible_job_id }}"
+    register: azure_jobs
+    until: azure_jobs.finished
+    retries: 300
+    with_items: "{{ server.results }}"
+
+  - name: create Azure vm extension to enable HTTPS WinRM listener
+    azure_rm_virtualmachine_extension:
+      name: winrm-extension
+      resource_group: "{{ vars.resourcegroupname }}"
+      virtual_machine_name: "{{ vars.vm_name }}"
+      publisher: Microsoft.Compute
+      virtual_machine_extension_type: CustomScriptExtension
+      type_handler_version: 1.9
+      settings: '{"commandToExecute": "powershell.exe -ExecutionPolicy ByPass -EncodedCommand {{winrm_enable_script}}"}'
+      auto_upgrade_minor_version: true
+
+  - name: Get facts for one private ip
+    azure_rm_networkinterface_info:
+      resource_group: "{{ vars.resourcegroupname }}"
+      name: "{{ vars.vm_name }}"
+    register: privateipaddress
+
+  - name: set private ip address fact
+    set_fact: privateipaddress="{{ privateipaddress | json_query('networkinterfaces[0].ip_configurations[0].private_ip_address')}}"
+
+  - name: wait for the WinRM port to come online
+    wait_for:
+      port: "{{ vars.winrm_port }}"
+      host: '{{azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress}}'
+      timeout: 600
+
+  - name: Populate instance config dict
+    set_fact:
+      instance_conf_dict: {
+        'instance': "{{ item.ansible_facts.azure_vm.name }}",
+        'address': "{{ azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}",
+        'user': "{{ vars.vm_user }}",
+        'password': "{{ vars.vm_password }}",
+        'port': "{{ vars.winrm_port }}",
+        'identity_file': ""
+        }
+    with_items: "{{ azure_jobs.results }}"
+    register: instance_config_dict
+    when: server.changed | bool
+
+  - name: Convert instance config dict to a list
+    set_fact:
+      instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+    when: server.changed | bool
+
+  - name: Dump instance config
+    copy:
+      content: "{{ instance_conf | to_json | from_json }}"
+      dest: "{{ molecule_instance_config }}"
+    when: server.changed | bool
+{%- endraw %}

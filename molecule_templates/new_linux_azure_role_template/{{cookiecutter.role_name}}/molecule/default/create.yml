@@ -1,0 +1,102 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    resource_group_name: "{{ cookiecutter.resource_prefix + '-' + cookiecutter.role_name }}"
+    {% raw -%}
+    ssh_user: molecule
+    ssh_port: 22
+    keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
+
+  tasks:
+    - name: Check for set resource group
+      fail:
+        msg: "Resource group is not set in < vars.resource_group_name >."
+      when: (vars.resource_group_name is undefined) or vars.resource_group_name == ""
+
+    - name: Create resource group
+      azure_rm_resourcegroup:
+        name: "{{ vars.resource_group_name }}"
+        location: "eastus"
+
+    - name: Create virtual network
+      azure_rm_virtualnetwork:
+        resource_group: "{{ vars.resource_group_name }}"
+        name: "{{ vars.resource_group_name }}-NET"
+        address_prefixes: "10.10.0.0/16"
+
+    - name: Create subnet
+      azure_rm_subnet:
+        resource_group: "{{ vars.resource_group_name }}"
+        name: "{{ vars.resource_group_name }}-sub"
+        address_prefix_cidr: 10.10.1.0/24
+        virtual_network_name: "{{ vars.resource_group_name }}-NET"
+
+    - name: Create keypair
+      user:
+        name: "{{ ssh_user }}"
+        generate_ssh_key: true
+        ssh_key_file: "{{ keypair_path }}"
+      register: keypair
+
+    - name: Create molecule instance(s)
+      azure_rm_virtualmachine:
+        resource_group: "{{ item.resource_group_name }}"
+        name: "{{ item.name }}"
+        vm_size: "{{ item.vm_size }}"
+        managed_disk_type: "Standard_LRS"
+        admin_username: "{{ ssh_user }}"
+        public_ip_allocation_method: Dynamic
+        ssh_password_enabled: false
+        ssh_public_keys:
+          - path: "/home/{{ ssh_user }}/.ssh/authorized_keys"
+            key_data: "{{ keypair.ssh_public_key }}"
+        image: "{{ item.image }}"
+      register: server
+      with_items: "{{ molecule_yml.platforms }}"
+      async: 7200
+      poll: 0
+
+    - name: Wait for instance(s) creation to complete
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: azure_jobs
+      until: azure_jobs.finished
+      retries: 300
+      with_items: "{{ server.results }}"
+
+    # Mandatory configuration for Molecule to function.
+    - name: Populate instance config dictionary
+      set_fact:
+        instance_conf_dict: {
+          'instance': "{{ item.ansible_facts.azure_vm.name }}",
+          'address': "{{ item.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}",
+          'user': "{{ ssh_user }}",
+          'port': "{{ ssh_port }}",
+          'identity_file': "{{ keypair_path }}", }
+      with_items: "{{ azure_jobs.results }}"
+      register: instance_config_dict
+      when: server.changed | bool
+
+    - name: Convert instance config dictionary to a list
+      set_fact:
+        instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+      when: server.changed | bool
+
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json }}"
+        dest: "{{ molecule_instance_config }}"
+      when: server.changed | bool
+
+    - name: Wait for SSH
+      wait_for:
+        port: "{{ ssh_port }}"
+        host: "{{ item.address }}"
+        search_regex: SSH
+        delay: 10
+      with_items: "{{ lookup('file', molecule_instance_config) }}"
+      {%- endraw %}
