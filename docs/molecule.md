@@ -1,6 +1,7 @@
-## Understanding the Molecule structure ##
+# Understanding the Molecule structure #
 
-### About Ansible Molecule ###
+## About Ansible Molecule ##
+
 According to its official documentation, Molecule is a project:
 
 &emsp;*“designed to aid in the development and testing of Ansible roles. It encourages an approach that results in consistently developed roles that are well-written, easily understood and maintained.”*
@@ -8,24 +9,25 @@ According to its official documentation, Molecule is a project:
 In a more simple way, Molecule tests your Anisble code. With Molecule you can easily run multiple tests against your Ansible roles/playbooks and make sure that they work as expected before deploying.
 
 Some things tested by Molecule:
-    
+
 - Linting of Yaml and Ansible code
 - Ansible syntax checking
 - Run of the role(s) on a virtual machine (VM)
 - Validation of the role(s) execution on the VM
 - Idempotence (test the same role(s) on the same VM a second time)
 
-### Molecule structure in an Anisble Playbook  ###
-The Molecule directory structure for Ansible Playbooks consists of a Molecule head directory with a folder for each created scenario. Below is an example of multiple scenarios in a playbook directory structure
+## Molecule structure in an Anisble Playbook ##
 
+The Molecule directory structure for Ansible Playbooks consists of a Molecule head directory with a folder for each created scenario. Below is an example of multiple scenarios in a playbook directory structure
 
 ![directory structure](../images/molecule_playbook_directory.png)
 
-#### Playbook Molecule.yml ####
+### Playbook Molecule.yml ###
 
 Holds the default configuration for molecule.
 
-##### Playbook Molecule.yml Linux #####
+#### Playbook Molecule.yml Linux ####
+
 ```bash
 ---
 dependency:
@@ -82,8 +84,7 @@ Verifier: This section defines the test framework to use and any configuration n
 - directory: the main testing files location (set to the first role of the playbook)
 - additional_file_or_dir: this specifies the other roles test files locations, any addition tests should be added to this list
 
-    
-##### Playbook Molecule.yml Windows #####
+#### Playbook Molecule.yml Windows ####
 
 ```bash
 ---
@@ -151,10 +152,11 @@ Provisioner:
 - name: the name of the provisioner to use (always ansible in our use)
 - connections options: This section defines some important information for Ansible to connect to the remote VM. This included the username/password, the connection type, and shell to use.
 
-#### Playbook Create.yml ####
+### Playbook Create.yml ###
+
  Defines the steps to perform to provision an Azure-based VM and required infrastructure, which will be used for testing.
 
-##### Playbook Create.yml Linux #####
+#### Playbook Create.yml Linux ####
 
 ```bash
 ---
@@ -265,7 +267,7 @@ __Important file notes__:
 
 While most steps are self explaintory such as creating the Azure resource group and creating the virtual network, it is important to not that Linux VMs use SSH as the connection method. As such, in this file, we have a step that creates a random generated SSH key.
 
-##### Playbook Create.yml Windows #####
+#### Playbook Create.yml Windows ####
 
 ```bash
 ---
@@ -432,11 +434,11 @@ While most steps are self explaintory such as creating the Azure resource group 
 
 __Important file notes__:
 
-Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information. 
+Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information.
 
 __Note:__ Values (VM, resource group, etc..) must match the values set in the create.yml file.
 
-#### Playbook Destroy.yml ####
+### Playbook Destroy.yml ###
 
 Defines the steps to take to teardown the Azure-based testing infrastructure. This file can be considered the opposite of the create.yml file, in which each create step is undone.
 
@@ -492,7 +494,8 @@ Defines the steps to take to teardown the Azure-based testing infrastructure. Th
 
 ```
 
-#### Playbook Verify.yml (Windows) ####
+### Playbook Verify.yml (Windows) ###
+
 This file defines the locations of the Ansible-based tests for each role in the playbook
 
 Below is an example verify.yml
@@ -519,20 +522,21 @@ Below is an example verify.yml
 
 ```
 
-#### Playbook Test_empty.py (Linux)] ####
+### Playbook Test_empty.py (Linux)] ###
+
 This file is simply a blank place holder. This file is needed as a quirk of the Molecule platform need of a test_*.py file at the playbook level in order to call the tests at the role(s) level (see the verifier section in molecule.yml file).
 
-### Molecule structure in an Anisble Role ###
+## Molecule structure in an Anisble Role ##
 
 The Molecule directory structure for Ansible roles consists of a Molecule head directory with a default(scenario) folder that holds all the Molecule files for that role. Below is an example of role directory with the added Molecule structure
 
 ![directory structure](../images/molecule_role_directory.png)
 
-#### Role Molecule.yml
+### Role Molecule.yml ###
 
 Holds the default configuration for molecule.
-    
-##### Role Molecule.yml Linux
+
+#### Role Molecule.yml Linux ####
 
 ```bash
 ---
@@ -577,8 +581,8 @@ Verifier:
 - directory: the main testing files location (set to the first role of the playbook)
 - additional_file_or_dir: this specifies the other roles test files locations, any addition tests should be added to this list
 
-    
-##### Role Molecule.yml Windows
+#### Role Molecule.yml Windows ####
+
 ```bash
 ---
 dependency:
@@ -630,10 +634,11 @@ Provisioner:
 - name: the name of the provisioner to use (always ansible in our use)
 - connections options: This section defines some important information for Ansible to connect to the remote VM. This included the username/password, the connection type, and shell to use.
 
-#### Role Create.yml ####
+### Role Create.yml ###
+
 Defines the steps to perform to provision an Azure-based VM and required infrastructure, which will be used for testing.
 
-##### Role Create.yml Linux #####
+#### Role Create.yml Linux ####
 
 ```bash
 ---
@@ -744,7 +749,7 @@ __Important file notes__:
 
 While most steps are self explaintory such as creating the Azure resource group and creating the virtual network, it is important to not that Linux VMs use SSH as the connection method. As such, in this file, we have a step that creates a random generated SSH key.
 
-##### Role Create.yml Windows #####
+#### Role Create.yml Windows ####
 
 ```bash
 ---
@@ -912,11 +917,11 @@ While most steps are self explaintory such as creating the Azure resource group 
 
 __Important file notes__:
 
-Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information. 
+Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information.
 
 __Note:__ Values (VM, resource group, etc..) must match the values set in the create.yml file.
 
-#### Role Destroy.yml ####
+### Role Destroy.yml ###
 
 Defines the steps to take to teardown the Azure-based testing infrastructure. This file can be considered the opposite of the create.yml file, in which each create step is undone.
 
@@ -973,14 +978,13 @@ Defines the steps to take to teardown the Azure-based testing infrastructure. Th
 
 ```
 
-#### Role Verify.yml (Windows) ####
+### Role Verify.yml (Windows) ###
 
 At the role level, this file defines the Ansible-based tests. Each role will have its own tests defined this way.
 
 See [Writing an Ansible test for a Windows VM.](#writing-an-ansible-test-for-a-windows-vm) for a complete example.
 
-
-#### Role Test_*.py (Linux) ####
+### Role Test_*.py (Linux) ###
 
 At the role level, this file defines the Python testinfra-based test. Each role can have multiple tests defined in files prefixed with test_ under the molecule/default/tests directory.
 
