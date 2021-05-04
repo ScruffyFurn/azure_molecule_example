@@ -4,9 +4,13 @@
 
 According to its official documentation, Molecule is a project:
 
-&emsp;*“designed to aid in the development and testing of Ansible roles. It encourages an approach that results in consistently developed roles that are well-written, easily understood and maintained.”*
+&emsp;*“designed to aid in the development and testing of Ansible roles. It
+encourages an approach that results in consistently developed roles that
+are well-written, easily understood and maintained.”*
 
-In a more simple way, Molecule tests your Anisble code. With Molecule you can easily run multiple tests against your Ansible roles/playbooks and make sure that they work as expected before deploying.
+In a more simple way, Molecule tests your Anisble code. With Molecule you can
+easily run multiple tests against your Ansible roles/playbooks and make sure
+that they work as expected before deploying.
 
 Some things tested by Molecule:
 
@@ -18,7 +22,9 @@ Some things tested by Molecule:
 
 ## Molecule structure in an Anisble Playbook ##
 
-The Molecule directory structure for Ansible Playbooks consists of a Molecule head directory with a folder for each created scenario. Below is an example of multiple scenarios in a playbook directory structure
+The Molecule directory structure for Ansible Playbooks consists of a Molecule
+head directory with a folder for each created scenario.
+Below is an example of multiple scenarios in a playbook directory structure
 
 ![directory structure](../images/molecule_playbook_directory.png)
 
@@ -71,18 +77,22 @@ scenario:
 
 Important sections to note:
 
-Platforms: This sections defines the information required to provision the VM for testing on.
+Platforms: This sections defines the information required to provision the VM
+for testing on.
 
 - name: the name of the VM
 - resource_group_name: the name of the Azure resource group
 - vm_size: the Azure VM size SKU
-- image: the image information for the VM OS, this includes the offer, publisher, sku and version.
+- image: the image information for the VM OS, this includes the offer, publisher,
+sku and version.
 
-Verifier: This section defines the test framework to use and any configuration needed for the testing framework.
+Verifier: This section defines the test framework to use and any configuration
+needed for the testing framework.
 
 - name: the verifier to use, in the case of Linux we are using testinfra
 - directory: the main testing files location (set to the first role of the playbook)
-- additional_file_or_dir: this specifies the other roles test files locations, any addition tests should be added to this list
+- additional_file_or_dir: this specifies the other roles test files locations,
+any addition tests should be added to this list
 
 #### Playbook Molecule.yml Windows ####
 
@@ -140,21 +150,26 @@ scenario:
 
 Important sections to note:
 
-Platforms: This sections defines the information required to provision the VM for testing on.
+Platforms: This sections defines the information required to provision the VM
+for testing on.
 
 - name: the name of the VM
 - resource_group_name: the name of the Azure resource group
 - vm_size: the Azure VM size SKU
-- image: the image information for the VM OS, this includes the offer, publisher, sku and version.
+- image: the image information for the VM OS, this includes the offer, publisher,
+sku and version.
 
 Provisioner:
 
 - name: the name of the provisioner to use (always ansible in our use)
-- connections options: This section defines some important information for Ansible to connect to the remote VM. This included the username/password, the connection type, and shell to use.
+- connections options: This section defines some important information for
+Ansible to connect to the remote VM. This included the username/password,
+the connection type, and shell to use.
 
 ### Playbook Create.yml ###
 
- Defines the steps to perform to provision an Azure-based VM and required infrastructure, which will be used for testing.
+Defines the steps to perform to provision an Azure-based VM
+and required infrastructure, which will be used for testing.
 
 #### Playbook Create.yml Linux ####
 
@@ -265,7 +280,10 @@ Provisioner:
 
 __Important file notes__:
 
-While most steps are self explaintory such as creating the Azure resource group and creating the virtual network, it is important to not that Linux VMs use SSH as the connection method. As such, in this file, we have a step that creates a random generated SSH key.
+While most steps are self explaintory such as creating the Azure resource group
+and creating the virtual network, it is important to not that Linux VMs use SSH
+as the connection method. As such, in this file, we have a step that creates a
+random generated SSH key.
 
 #### Playbook Create.yml Windows ####
 
@@ -434,13 +452,20 @@ While most steps are self explaintory such as creating the Azure resource group 
 
 __Important file notes__:
 
-Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information.
+Much like its Linux counterpart, the steps defined are self explainitory.
+The major differences in the creation process are, first we need to do some
+extra steps to define a security (firewall) policy, which helps keep things
+secure. The second is the that Windows VMs use WinRM as the default connection,
+to support that we need to provide some addition information.
 
-__Note:__ Values (VM, resource group, etc..) must match the values set in the create.yml file.
+__Note:__ Values (VM, resource group, etc..) must match the values set in the
+create.yml file.
 
 ### Playbook Destroy.yml ###
 
-Defines the steps to take to teardown the Azure-based testing infrastructure. This file can be considered the opposite of the create.yml file, in which each create step is undone.
+Defines the steps to take to teardown the Azure-based testing infrastructure.
+This file can be considered the opposite of the create.yml file, in which each
+create step is undone.
 
 ```bash
 ---
@@ -524,11 +549,15 @@ Below is an example verify.yml
 
 ### Playbook Test_empty.py (Linux)] ###
 
-This file is simply a blank place holder. This file is needed as a quirk of the Molecule platform need of a test_*.py file at the playbook level in order to call the tests at the role(s) level (see the verifier section in molecule.yml file).
+This file is simply a blank place holder. This file is needed as a quirk of the
+Molecule platform need of a test_*.py file at the playbook level in order to call
+the tests at the role(s) level (see the verifier section in molecule.yml file).
 
 ## Molecule structure in an Anisble Role ##
 
-The Molecule directory structure for Ansible roles consists of a Molecule head directory with a default(scenario) folder that holds all the Molecule files for that role. Below is an example of role directory with the added Molecule structure
+The Molecule directory structure for Ansible roles consists of a Molecule head
+directory with a default(scenario) folder that holds all the Molecule files for
+that role. Below is an example of role directory with the added Molecule structure
 
 ![directory structure](../images/molecule_role_directory.png)
 
@@ -568,18 +597,21 @@ lint: |
 
 Important sections to note:
 
-Platforms: This sections defines the information required to provision the VM for testing on.
+Platforms: This sections defines the information required to provision the VM
+for testing on.
 
 - name: the name of the VM
 - resource_group_name: the name of the Azure resource group
 - vm_size: the Azure VM size SKU
-- image: the image information for the VM OS, this includes the offer, publisher, sku and version.
+- image: the image information for the VM OS, this includes the offer, publisher,
+sku and version.
 
 Verifier:
 
 - name: the verifier to use, in the case of Linux we are using testinfra
 - directory: the main testing files location (set to the first role of the playbook)
-- additional_file_or_dir: this specifies the other roles test files locations, any addition tests should be added to this list
+- additional_file_or_dir: this specifies the other roles test files locations,
+any addition tests should be added to this list
 
 #### Role Molecule.yml Windows ####
 
@@ -622,21 +654,26 @@ lint: |
 
 Important sections to note:
 
-Platforms: This sections defines the information required to provision the VM for testing on.
+Platforms: This sections defines the information required to provision the VM for
+testing on.
 
 - name: the name of the VM
 - resource_group_name: the name of the Azure resource group
 - vm_size: the Azure VM size SKU
-- image: the image information for the VM OS, this includes the offer, publisher, sku and version.
+- image: the image information for the VM OS, this includes the offer, publisher,
+sku and version.
 
 Provisioner:
 
 - name: the name of the provisioner to use (always ansible in our use)
-- connections options: This section defines some important information for Ansible to connect to the remote VM. This included the username/password, the connection type, and shell to use.
+- connections options: This section defines some important information for Ansible
+to connect to the remote VM. This included the username/password, the connection
+type, and shell to use.
 
 ### Role Create.yml ###
 
-Defines the steps to perform to provision an Azure-based VM and required infrastructure, which will be used for testing.
+Defines the steps to perform to provision an Azure-based VM and required
+infrastructure, which will be used for testing.
 
 #### Role Create.yml Linux ####
 
@@ -747,7 +784,10 @@ Defines the steps to perform to provision an Azure-based VM and required infrast
 
 __Important file notes__:
 
-While most steps are self explaintory such as creating the Azure resource group and creating the virtual network, it is important to not that Linux VMs use SSH as the connection method. As such, in this file, we have a step that creates a random generated SSH key.
+While most steps are self explaintory such as creating the Azure resource group
+and creating the virtual network, it is important to not that Linux VMs use SSH
+as the connection method. As such, in this file, we have a step that creates a
+random generated SSH key.
 
 #### Role Create.yml Windows ####
 
@@ -917,13 +957,20 @@ While most steps are self explaintory such as creating the Azure resource group 
 
 __Important file notes__:
 
-Much like its Linux counterpart, the steps defined are self explainitory. The major differences in the creation process are, first we need to do some extra steps to define a security (firewall) policy, which helps keep things secure. The second is the that Windows VMs use WinRM as the default connection, to support that we need to provide some addition information.
+Much like its Linux counterpart, the steps defined are self explainitory. The
+major differences in the creation process are, first we need to do some extra
+steps to define a security (firewall) policy, which helps keep things secure.
+The second is the that Windows VMs use WinRM as the default connection,
+to support that we need to provide some addition information.
 
-__Note:__ Values (VM, resource group, etc..) must match the values set in the create.yml file.
+__Note:__ Values (VM, resource group, etc..) must match the values set in the
+create.yml file.
 
 ### Role Destroy.yml ###
 
-Defines the steps to take to teardown the Azure-based testing infrastructure. This file can be considered the opposite of the create.yml file, in which each create step is undone.
+Defines the steps to take to teardown the Azure-based testing infrastructure. This
+file can be considered the opposite of the create.yml file, in which each create
+step is undone.
 
 ```bash
 ---
@@ -980,12 +1027,17 @@ Defines the steps to take to teardown the Azure-based testing infrastructure. Th
 
 ### Role Verify.yml (Windows) ###
 
-At the role level, this file defines the Ansible-based tests. Each role will have its own tests defined this way.
+At the role level, this file defines the Ansible-based tests. Each role will have
+its own tests defined this way.
 
-See [Writing an Ansible test for a Windows VM.](#writing-an-ansible-test-for-a-windows-vm) for a complete example.
+See [Writing an Ansible test for a Windows VM.](#writing-an-ansible-test-for-a-windows-vm)
+ for a complete example.
 
 ### Role Test_*.py (Linux) ###
 
-At the role level, this file defines the Python testinfra-based test. Each role can have multiple tests defined in files prefixed with test_ under the molecule/default/tests directory.
+At the role level, this file defines the Python testinfra-based test. Each role
+can have multiple tests defined in files prefixed with test_ under the molecule
+/default/tests directory.
 
-See [Writing an Ansible test for a Linux VM.](#writing-an-ansible-test-for-a-linux-vm) for a complete example.
+See [Writing an Ansible test for a Linux VM.](#writing-an-ansible-test-for-a-linux-vm)
+for a complete example.
