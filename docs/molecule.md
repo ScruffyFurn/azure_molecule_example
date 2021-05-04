@@ -871,7 +871,7 @@ random generated SSH key.
         subnet: "{{ vars.vm_name }}"
         public_ip_name: "{{ vars.vm_name }}ip01"
         security_group: "{{ vars.vm_name }}sg01"
-    
+
     - name: create Azure storage account
       azure_rm_storageaccount:
         name: "{{ storage_account }}"
