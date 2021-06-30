@@ -1,0 +1,23 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: azure
+platforms:
+  - name: {{cookiecutter.scenario_name}}
+    resource_group_name: "{{ cookiecutter.resource_prefix + '-' + cookiecutter.scenario_name }}"
+    vm_size: Standard_B1s
+    image:
+      offer: CentOS
+      publisher: OpenLogic
+      sku: '7.4'
+      version: latest
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra
+playbooks:
+  prepare: prepare.yml
+lint: |
+  set -e
+  yamllint .

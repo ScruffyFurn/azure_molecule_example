@@ -1,0 +1,6 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Include vars
+      include_vars: ../../defaults/main.yml

@@ -1,0 +1,6 @@
+---
+# This file defines the role tests that should be run to verify the playbook.
+# If a new role is added, an import of that roles verify file should be added below.
+- hosts: all
+# - name: Include role tests
+# import_playbook: {role}/molecule/default/verify.yml

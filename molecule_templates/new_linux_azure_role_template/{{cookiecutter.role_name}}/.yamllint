@@ -1,0 +1,8 @@
+---
+# Based on ansible-lint config
+extends: default
+
+rules:
+  new-lines:
+    type: unix
+  line-length: disable
